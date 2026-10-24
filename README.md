@@ -47,3 +47,19 @@ I renamed the original columns to `snake_case` (several had double spaces) and a
 **Is `status` leakage?** A feature leaks when it would not be known at the moment of prediction. `status` is documented as part of the 9-month aggregate, so the operator knows it at month 9: it is a legitimate early warning, not the answer in disguise. Non-active customers churn at 48%, against 6% for active ones. Because this rests on the documentation, Step 5 tests a model without it.
 
 **Duplicates:** 300 rows (9.5%) are identical to another row in every column. With continuous values like seconds of use and customer value, that is almost certainly duplicated records rather than look-alike customers. Left in, a row and its copy could end up on both sides of the train/test split and inflate the test scores, so they are removed in Step 3.
+
+## 3. What the data shows
+
+After removing duplicates there are **2,850 customers**, of whom **446 churned (15.6%)**. A model that predicts "no churn" for everyone would already be 84% accurate, which is why accuracy is not the measure of success here.
+
+![Churn rate by group](figures/churn_rate_by_group.png)
+
+**Finding 1: complaints are the loudest warning sign.** Customers who complained churned at 83%, against 10% for those who did not. Non-active customers churned at 48% and pay-as-you-go customers at 17%, against 3% on contract.
+
+![Usage of churners vs stayers](figures/usage_churners_vs_stayers.png)
+
+**Finding 2: churners go quiet before they leave.** Over months 1 to 9, churners made about 40% as many calls, sent about 20% as many SMSs and called half as many distinct numbers as customers who stayed. The signal is visible three months before they leave.
+
+![Customer value distribution](figures/customer_value_distribution.png)
+
+**Finding 3: most churners are low-value, but the value lost is concentrated.** Churners hold only 4.4% of total customer value, yet the most valuable fifth of churners accounts for about half of all value lost to churn. A call list should weigh how much each customer is worth, not only how likely they are to leave. (Customer value is measured over months 1 to 9, while churners were already cutting back, so it probably understates what they were worth before.)
