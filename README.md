@@ -11,6 +11,7 @@ Built on 2,850 telecom customers, framed for a South African mobile operator.
 | **Result** | Catches **95% of churners** on unseen customers (ROC AUC 0.98), with 71% of flagged customers genuine churners |
 | **Action** | With capacity for about 10% of customers, ranking by expected loss protects **82% of the value at risk**, against 58% when ranking by churn probability and 10% when calling at random |
 | **Output** | [`reports/call_list_top50.csv`](reports/call_list_top50.csv): a ranked call list with a spending ceiling per customer |
+| **App** | [`app/streamlit_app.py`](app/streamlit_app.py): a Streamlit planner where the retention manager sets capacity and costs and gets the call list |
 
 ![Value captured by ranking](figures/value_captured_by_ranking.png)
 
@@ -172,6 +173,22 @@ The top 50 list is exported to [`reports/call_list_top50.csv`](reports/call_list
 4. **Watch for customers going quiet.** Falling calls and SMS volume is the clearest early signal. A monthly usage-drop alert would give the team even more lead time.
 5. **Measure the save rate.** The 30% save rate is the weakest assumption in this analysis. Run the first quarter as a controlled test (contact a random half of tier 2 and compare churn) to replace the assumption with a real number.
 
+## 9. Interactive call-list planner (Streamlit)
+
+The notebooks answer the question for one set of assumptions. A retention manager will want to ask "what if": what if we can only make 150 calls this quarter, or the offer costs R250? [`app/streamlit_app.py`](app/streamlit_app.py) turns the analysis into a small app that answers those questions directly.
+
+![Streamlit call-list planner](figures/app_screenshot.png)
+
+**What it does**
+
+- **Settings in the sidebar:** contacts per quarter, cost of a contact, value of a saved customer, the save rate, and whether to rank by expected loss or by churn probability.
+- **Break-even updates live:** the app only lists customers whose expected saving is bigger than the cost of contacting them (churn probability above cost / (save rate x value)).
+- **Four numbers at the top:** customers to contact, churners reached, share of the value at risk protected, and the expected net value in rand.
+- **The value-captured chart** from Step 7, with a dashed line at the chosen capacity, so the gap between the two rankings is visible at any capacity.
+- **The call list** with each customer's action tier and spending ceiling, downloadable as CSV.
+
+**How it scores customers.** The app uses the same random forest as the notebooks, but scores all 2,850 customers with **5-fold out-of-fold predictions**: each customer's probability comes from a model trained without them. That gives an honest score for the whole base instead of only the 713-customer test set. With the default settings (300 contacts), ranking by expected loss protects **82% of the value at risk**, the same as the test-set result in Step 7.
+
 ## Limitations
 
 - **Not South African data.** The customers are Iranian and `customer_value` is an undocumented score, not rand. The rand figures rest on stated assumptions (R250 a month, 12 months, R140 per contact, 30% save rate) and show the reasoning, not a forecast.
@@ -186,6 +203,7 @@ The top 50 list is exported to [`reports/call_list_top50.csv`](reports/call_list
 - In a South African role, use the operator's own billing and usage records (monthly spend, contract end date, recharge history, complaints, network drop data), processed under POPIA.
 - Calibrate the probabilities (for example with `CalibratedClassifierCV`) before using them for money decisions at scale.
 - Track the model's precision and the realised save rate every quarter.
+- Deploy the planner on Streamlit Community Cloud and feed it the live customer base each quarter instead of the historical data.
 
 ## How to run
 
@@ -199,6 +217,14 @@ jupyter notebook
 
 Run the notebooks in order. The first one downloads the data from UCI into `data/raw/` if it is not there yet.
 
+To open the call-list planner:
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+It opens in the browser at `http://localhost:8501`. The first load takes about 10 seconds while it scores every customer. To publish it, deploy the repo on [Streamlit Community Cloud](https://streamlit.io/cloud) with `app/streamlit_app.py` as the main file and Python 3.12; the app downloads the data from UCI itself.
+
 ## Project structure
 
 ```
@@ -206,6 +232,8 @@ notebooks/
   01_explore.ipynb     load, data dictionary, cleaning, exploratory analysis
   02_model.ipynb       baseline, logistic regression, random forest, threshold, evaluation
   03_call_list.ipynb   expected loss ranking, retention tiers, call list export
+app/
+  streamlit_app.py     interactive call-list planner
 figures/               charts used in this README
 reports/
   call_list_top50.csv  ranked call list
