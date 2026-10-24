@@ -18,3 +18,32 @@ These costs are estimated values only. The exact figures will vary, but across a
 **Metric and reasoning.** Because a false negative is significantly more expensive than a false positive, **recall** of the churners is the top target: how many of the customers who actually churned were caught by us? At the same time, calling every single customer gives perfect recall and makes the job impossible for the retention department. Therefore, precision is also measured alongside recall, the decision threshold is set based on the cost numbers rather than the default 0.5, and the final list of contacts is sorted by **expected loss** (product of the churn probability and the customer value). Accuracy is not used as the primary metric because in this case, the majority of customers do not churn, so predicting "no churn" for everyone would provide high accuracy while catching nobody.
 
 **Data note.** The project is based on the Iranian Churn dataset (UCI id 563): 3,150 customers of an Iranian telecommunication company with usage and billing features in the first nine months and the churn status in month twelve. Its "Customer Value" variable is a value score calculated by the operator, not an amount in rand, so financial results are reported in the dataset's own value units; the rand amounts above are given for illustrative purposes only. In the South African setting, I would use the operator's actual usage and billing data: monthly spending, the end date of the contract, recharge data, complaints and network drops. All these data are governed by POPIA.
+
+## 2. Data
+
+**Source:** [Iranian Churn dataset](https://archive.ics.uci.edu/dataset/563/iranian+churn+dataset), UCI Machine Learning Repository, id 563 (CC BY 4.0). 3,150 rows, one per customer, from an Iranian telecom operator.
+
+**Timing:** every feature is aggregated over the customer's **first 9 months**. `Churn` is their state at the **end of month 12**. The three months in between are the planning gap, which matches the business question: score customers at month 9, act before month 12.
+
+| Column | Type | Meaning | Values |
+|---|---|---|---|
+| `call_failure` | count | Calls that failed during months 1 to 9 | 0 to 36 |
+| `complains` | flag | Customer lodged a complaint | 0 = no, 1 = yes |
+| `subscription_length` | months | How long the customer has been subscribed | 3 to 47 |
+| `charge_amount` | ordinal | Spending band | 0 (lowest) to 10 (documented as 0 to 9; a few customers have 10) |
+| `seconds_of_use` | seconds | Total call time | 0 to 17,090 |
+| `frequency_of_use` | count | Number of calls made | 0 to 255 |
+| `frequency_of_sms` | count | Number of text messages sent | 0 to 522 |
+| `distinct_called_numbers` | count | Different numbers called | 0 to 97 |
+| `age_group` | ordinal | Age band | 1 (youngest) to 5 (oldest) |
+| `tariff_plan` | category | Type of service | 1 = pay as you go, 2 = contract |
+| `status` | category | Activity status during months 1 to 9 | 1 = active, 2 = non-active |
+| `age` | years | Customer age | 15 to 55 |
+| `customer_value` | score | Value of the customer calculated by the operator (units not documented, not rand) | 0 to 2,165 |
+| `churn` | target | Customer had left by month 12 | 0 = stayed, 1 = churned |
+
+I renamed the original columns to `snake_case` (several had double spaces) and added a `customer_id` from the row number so every prediction can be traced back to the raw file.
+
+**Is `status` leakage?** A feature leaks when it would not be known at the moment of prediction. `status` is documented as part of the 9-month aggregate, so the operator knows it at month 9: it is a legitimate early warning, not the answer in disguise. Non-active customers churn at 48%, against 6% for active ones. Because this rests on the documentation, Step 5 tests a model without it.
+
+**Duplicates:** 300 rows (9.5%) are identical to another row in every column. With continuous values like seconds of use and customer value, that is almost certainly duplicated records rather than look-alike customers. Left in, a row and its copy could end up on both sides of the train/test split and inflate the test scores, so they are removed in Step 3.
