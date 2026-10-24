@@ -13,3 +13,7 @@ __pycache__/
 .venv/
 *.pyc
 .DS_Store
+
+# Created by Streamlit when the app runs locally
+.agents/
+.claude/

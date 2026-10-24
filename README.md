@@ -6,6 +6,8 @@
 
 Built on 2,850 telecom customers, framed for a South African mobile operator.
 
+**[Try the live call-list planner](https://vusumuzinkosi-churn-planner.streamlit.app/)**
+
 | | |
 |---|---|
 | **Question** | Which customers will leave in the next quarter, how much value is at risk, and who should retention contact first? |
@@ -13,7 +15,7 @@ Built on 2,850 telecom customers, framed for a South African mobile operator.
 | **Result** | Catches **95% of churners** on unseen customers (ROC AUC 0.98), with 71% of flagged customers genuine churners |
 | **Action** | With capacity for about 10% of customers, ranking by expected loss protects **82% of the value at risk**, against 58% when ranking by churn probability and 10% when calling at random |
 | **Output** | [`reports/call_list_top50.csv`](reports/call_list_top50.csv): a ranked call list with a spending ceiling per customer |
-| **App** | [`app/streamlit_app.py`](app/streamlit_app.py): a Streamlit planner where the retention manager sets capacity and costs and gets the call list |
+| **App** | [Live call-list planner](https://vusumuzinkosi-churn-planner.streamlit.app/) ([`app/streamlit_app.py`](app/streamlit_app.py)): the retention manager sets capacity and costs and gets the call list |
 
 ![Value captured by ranking](figures/value_captured_by_ranking.png)
 
@@ -177,7 +179,7 @@ The top 50 list is exported to [`reports/call_list_top50.csv`](reports/call_list
 
 ## 9. Interactive call-list planner (Streamlit)
 
-The notebooks answer the question for one set of assumptions. A retention manager will want to ask "what if": what if we can only make 150 calls this quarter, or the offer costs R250? [`app/streamlit_app.py`](app/streamlit_app.py) turns the analysis into a small app that answers those questions directly.
+The notebooks answer the question for one set of assumptions. A retention manager will want to ask "what if": what if we can only make 150 calls this quarter, or the offer costs R250? [`app/streamlit_app.py`](app/streamlit_app.py) turns the analysis into a small app that answers those questions directly. **[Open the live app](https://vusumuzinkosi-churn-planner.streamlit.app/)** (if it has been idle it takes a moment to wake up).
 
 ![Streamlit call-list planner](figures/app_screenshot.png)
 
@@ -205,7 +207,7 @@ The notebooks answer the question for one set of assumptions. A retention manage
 - In a South African role, use the operator's own billing and usage records (monthly spend, contract end date, recharge history, complaints, network drop data), processed under POPIA.
 - Calibrate the probabilities (for example with `CalibratedClassifierCV`) before using them for money decisions at scale.
 - Track the model's precision and the realised save rate every quarter.
-- Deploy the planner on Streamlit Community Cloud and feed it the live customer base each quarter instead of the historical data.
+- Feed the planner the live customer base each quarter instead of the historical data.
 
 ## How to run
 
@@ -225,7 +227,7 @@ To open the call-list planner:
 streamlit run app/streamlit_app.py
 ```
 
-It opens in the browser at `http://localhost:8501`. The first load takes about 10 seconds while it scores every customer. To publish it, deploy the repo on [Streamlit Community Cloud](https://streamlit.io/cloud) with `app/streamlit_app.py` as the main file and Python 3.12; the app downloads the data from UCI itself.
+It opens in the browser at `http://localhost:8501`. The first load takes about 10 seconds while it scores every customer. The same app is deployed on [Streamlit Community Cloud](https://vusumuzinkosi-churn-planner.streamlit.app/) (main file `app/streamlit_app.py`, Python 3.12); it downloads the data from UCI itself, and every push to `main` updates it.
 
 ## Project structure
 
