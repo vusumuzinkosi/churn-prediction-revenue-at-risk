@@ -94,3 +94,31 @@ One coefficient is a trap: `seconds_of_use` comes out *positive*, although churn
 **No class weighting.** I deliberately did not use `class_weight="balanced"`. It would inflate the predicted probabilities, and Step 7 needs honest probabilities to compute expected loss. The imbalance is handled by choosing the threshold from costs instead.
 
 **Robustness check on `status`:** without it, the forest's PR AUC drops only from 0.932 to 0.909, because usage carries much of the same signal. Keeping it is low-risk even if the documentation were wrong about its timing.
+
+## 6. Evaluation
+
+**Choosing the threshold from costs.** With the costs from Section 1 and one extra assumption, that a retention offer persuades **30%** of genuine churners to stay, contacting a customer pays off on average when
+
+`p(churn) x 30% x R3,000 > R140`, so `p > 0.156`.
+
+Scanning thresholds on out-of-fold training predictions confirms it: net value peaks at **0.23**, and anything between about 0.15 and 0.45 earns almost the same. The default 0.5 earns noticeably less.
+
+![Net value by threshold](figures/net_value_by_threshold.png)
+
+**Test set results** (713 customers the model had never seen, 112 of them churners):
+
+| Model | Threshold | ROC AUC | PR AUC | Recall | Precision | Customers flagged |
+|---|---|---|---|---|---|---|
+| Logistic regression | 0.50 | 0.932 | 0.778 | 0.48 | 0.83 | 65 |
+| Random forest | 0.50 | 0.983 | 0.932 | 0.79 | 0.92 | 96 |
+| **Random forest** | **0.23** | **0.983** | **0.932** | **0.95** | **0.71** | **149** |
+
+![Confusion matrices](figures/confusion_matrices.png)
+
+Moving from 0.5 to 0.23 catches 18 more churners (106 of 112 instead of 88) at the price of 35 more unnecessary contacts. Given that a missed churner costs about 20 times more than a wasted call, that is the right trade.
+
+**In money terms:** the flagged churners hold 95% of the customer value at risk on the test set. Under the README's rand assumptions, contacting the 149 flagged customers costs R20,860 and is expected to keep about 32 customers worth R95,400, a net gain of about **R74,500 on these 713 customers**.
+
+![Precision-recall curve](figures/precision_recall_curve.png)
+
+**Capacity binds.** The team can contact about 300 of roughly 2,850 customers a quarter (10.5%), which is 75 on the test set. The threshold flags 149, so the model needs to say *who first*. That is Step 7.
