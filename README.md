@@ -69,3 +69,28 @@ After removing duplicates there are **2,850 customers**, of whom **446 churned (
 The data is split 75/25 into training (2,137 customers) and test (713 customers), stratified so both have the same churn rate. The test set is not used until Step 6.
 
 The baseline predicts "no churn" for everyone. On the test set it scores **84.3% accuracy, 0% recall and undefined precision**: it looks good and catches nobody. Every model has to beat it on recall and precision, not on accuracy.
+
+## 5. Models
+
+Two models, compared with 5-fold cross-validation on the training set only:
+
+| Model (5-fold CV) | ROC AUC | PR AUC | Recall @ 0.5 | Precision @ 0.5 |
+|---|---|---|---|---|
+| Logistic regression (scaled features) | 0.931 | 0.750 | 0.46 | 0.79 |
+| Random forest (500 trees) | **0.984** | **0.932** | **0.80** | **0.89** |
+
+ROC AUC and PR AUC measure how well a model **ranks** customers, independent of any threshold, so they are the fair comparison. PR AUC matters most here because it focuses on the minority class (churners). The random forest goes forward.
+
+**What the logistic regression says drives churn** (standardised coefficients, other features held fixed):
+
+1. **Frequency of use** is the strongest protective factor: one standard deviation more calls cuts the odds of churning to about an eighth.
+2. **Frequency of SMS** points the same way: active texters rarely leave.
+3. **Complaints** multiply the odds of churn by about 2.7.
+
+![Logistic regression coefficients](figures/logreg_coefficients.png)
+
+One coefficient is a trap: `seconds_of_use` comes out *positive*, although churners talked far less. Seconds, number of calls and customer value move together, so the model splits their shared effect in ways that should not be read one coefficient at a time (multicollinearity). The reliable story is the group one: low usage means high risk.
+
+**No class weighting.** I deliberately did not use `class_weight="balanced"`. It would inflate the predicted probabilities, and Step 7 needs honest probabilities to compute expected loss. The imbalance is handled by choosing the threshold from costs instead.
+
+**Robustness check on `status`:** without it, the forest's PR AUC drops only from 0.932 to 0.909, because usage carries much of the same signal. Keeping it is low-risk even if the documentation were wrong about its timing.
