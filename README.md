@@ -1,5 +1,19 @@
 # Churn Prediction: Revenue at Risk
 
+**A churn model that tells a retention team who to call first, and how much revenue that protects.**
+
+Built on 2,850 telecom customers, framed for a South African mobile operator.
+
+| | |
+|---|---|
+| **Question** | Which customers will leave in the next quarter, how much value is at risk, and who should retention contact first? |
+| **Model** | Random forest, threshold set from business costs instead of the default 0.5 |
+| **Result** | Catches **95% of churners** on unseen customers (ROC AUC 0.98), with 71% of flagged customers genuine churners |
+| **Action** | With capacity for about 10% of customers, ranking by expected loss protects **82% of the value at risk**, against 58% when ranking by churn probability and 10% when calling at random |
+| **Output** | [`reports/call_list_top50.csv`](reports/call_list_top50.csv): a ranked call list with a spending ceiling per customer |
+
+![Value captured by ranking](figures/value_captured_by_ranking.png)
+
 ## 1. Business problem
 
 **Client and context.** The imaginary client is a South African mobile network operator with a mix of prepaid and contract subscribers. Its customer retention department can take three actions on any customer they believe will churn: give them a call, a discount/bonus data offer, or an early upgrade offer. They are constrained by the number of contacts they can make: for this project I assume the team can contact about 300 customers per quarter.
@@ -149,3 +163,53 @@ Customers above the cost-based threshold are ranked by expected loss, not by pro
 **Budget buffer:** the most worth spending on contacting a customer is `p(churn) x save rate x value if saved`. For an average customer (R3,000) at 90% risk that is about R810; at 20% risk, about R180. Tier 1 customers justify a median of about R730 each, so a R140 call plus offer is well inside the margin.
 
 The top 50 list is exported to [`reports/call_list_top50.csv`](reports/call_list_top50.csv), with each customer's churn probability, value, expected loss and spending ceiling.
+
+## 8. Recommendation
+
+1. **Score every active customer at month 9 of each quarter** with the random forest and contact only those above a churn probability of about 0.23. Below that, a R140 contact loses money on average.
+2. **Call in order of expected loss, not probability.** With capacity for about 300 contacts a quarter, this reaches far more of the value at risk.
+3. **Treat a complaint as an immediate trigger.** 83% of customers who complained left. A complaint should open a retention case the same week, without waiting for the quarterly score.
+4. **Watch for customers going quiet.** Falling calls and SMS volume is the clearest early signal. A monthly usage-drop alert would give the team even more lead time.
+5. **Measure the save rate.** The 30% save rate is the weakest assumption in this analysis. Run the first quarter as a controlled test (contact a random half of tier 2 and compare churn) to replace the assumption with a real number.
+
+## Limitations
+
+- **Not South African data.** The customers are Iranian and `customer_value` is an undocumented score, not rand. The rand figures rest on stated assumptions (R250 a month, 12 months, R140 per contact, 30% save rate) and show the reasoning, not a forecast.
+- **Small dataset.** 2,850 customers and a 713-customer test set. Results would need confirming on a larger, more recent base.
+- **One snapshot in time.** The model is trained on one 12-month window. Customer behaviour, prices and competitor offers change, so a deployed model would need monitoring and regular retraining.
+- **Value measured during decline.** Churners' value is measured while they were already cutting back, so the value at risk is probably understated.
+- **No causal claim.** The model finds who is likely to leave, not why. It cannot say whether a call will change the outcome; only the controlled test in recommendation 5 can.
+
+## Next steps
+
+- Repeat the analysis on the [Expresso churn dataset](https://zindi.africa/competitions/expresso-churn-prediction) (Zindi, 2 million+ African prepaid customers, heavy missing data) to show the approach scales to messy, large data.
+- In a South African role, use the operator's own billing and usage records (monthly spend, contract end date, recharge history, complaints, network drop data), processed under POPIA.
+- Calibrate the probabilities (for example with `CalibratedClassifierCV`) before using them for money decisions at scale.
+- Track the model's precision and the realised save rate every quarter.
+
+## How to run
+
+```bash
+git clone https://github.com/vusumuzinkosi/churn-prediction-revenue-at-risk.git
+cd churn-prediction-revenue-at-risk
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+jupyter notebook
+```
+
+Run the notebooks in order. The first one downloads the data from UCI into `data/raw/` if it is not there yet.
+
+## Project structure
+
+```
+notebooks/
+  01_explore.ipynb     load, data dictionary, cleaning, exploratory analysis
+  02_model.ipynb       baseline, logistic regression, random forest, threshold, evaluation
+  03_call_list.ipynb   expected loss ranking, retention tiers, call list export
+figures/               charts used in this README
+reports/
+  call_list_top50.csv  ranked call list
+data/                  raw and processed data (not committed)
+```
+
+*Author: Vusumuzi Nkosi ([GitHub](https://github.com/vusumuzinkosi))*
