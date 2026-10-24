@@ -63,3 +63,9 @@ After removing duplicates there are **2,850 customers**, of whom **446 churned (
 ![Customer value distribution](figures/customer_value_distribution.png)
 
 **Finding 3: most churners are low-value, but the value lost is concentrated.** Churners hold only 4.4% of total customer value, yet the most valuable fifth of churners accounts for about half of all value lost to churn. A call list should weigh how much each customer is worth, not only how likely they are to leave. (Customer value is measured over months 1 to 9, while churners were already cutting back, so it probably understates what they were worth before.)
+
+## 4. Baseline
+
+The data is split 75/25 into training (2,137 customers) and test (713 customers), stratified so both have the same churn rate. The test set is not used until Step 6.
+
+The baseline predicts "no churn" for everyone. On the test set it scores **84.3% accuracy, 0% recall and undefined precision**: it looks good and catches nobody. Every model has to beat it on recall and precision, not on accuracy.
