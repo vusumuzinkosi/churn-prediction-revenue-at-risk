@@ -1,5 +1,7 @@
 # Churn Prediction: Revenue at Risk
 
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white) ![Status](https://img.shields.io/badge/Status-Complete-2EA44F?style=flat-square)
+
 **A churn model that tells a retention team who to call first, and how much revenue that protects.**
 
 Built on 2,850 telecom customers, framed for a South African mobile operator.
@@ -212,4 +214,7 @@ reports/
 data/                  raw and processed data (not committed)
 ```
 
-*Author: Vusumuzi Nkosi ([GitHub](https://github.com/vusumuzinkosi))*
+---
+
+**Vusumuzi Nkosi** · Data Scientist · South Africa<br>
+[Portfolio](https://vusumuzinkosi.github.io) · [LinkedIn](https://linkedin.com/in/vusumuzinkosi) · [GitHub](https://github.com/vusumuzinkosi) · [Email](mailto:vusizwe@rocketmail.com)
