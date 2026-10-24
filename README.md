@@ -122,3 +122,30 @@ Moving from 0.5 to 0.23 catches 18 more churners (106 of 112 instead of 88) at t
 ![Precision-recall curve](figures/precision_recall_curve.png)
 
 **Capacity binds.** The team can contact about 300 of roughly 2,850 customers a quarter (10.5%), which is 75 on the test set. The threshold flags 149, so the model needs to say *who first*. That is Step 7.
+
+## 7. From scores to a call list
+
+`expected loss = p(churn) x customer value`
+
+Customers above the cost-based threshold are ranked by expected loss, not by probability alone. On the test set, with the team's capacity of 75 contacts:
+
+| Ranking used | Share of churners' value protected by the first 75 contacts |
+|---|---|
+| **Expected loss** | **82%** |
+| Churn probability alone | 58% |
+| Random calling | 10% |
+
+![Value captured by ranking](figures/value_captured_by_ranking.png)
+
+**Retention tiers** (test set):
+
+| Tier | Who | Action | Customers | Actually churned |
+|---|---|---|---|---|
+| 1 | Top 50 eligible by expected loss | Personal call from an agent with authority to offer an upgrade or discount | 50 | 96% |
+| 2 | Next eligible, up to capacity | Targeted SMS or email with a bonus data offer | 25 | 76% |
+| 3 | Eligible beyond capacity | Automated low-cost nudge, no agent time | 74 | 53% |
+| None | Below the threshold | No contact: it costs more than it is expected to save | 564 | 1% |
+
+**Budget buffer:** the most worth spending on contacting a customer is `p(churn) x save rate x value if saved`. For an average customer (R3,000) at 90% risk that is about R810; at 20% risk, about R180. Tier 1 customers justify a median of about R730 each, so a R140 call plus offer is well inside the margin.
+
+The top 50 list is exported to [`reports/call_list_top50.csv`](reports/call_list_top50.csv), with each customer's churn probability, value, expected loss and spending ceiling.
